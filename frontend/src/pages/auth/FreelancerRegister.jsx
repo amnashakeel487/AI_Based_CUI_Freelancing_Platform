@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 /* ---------- Components live OUTSIDE the page so inputs keep focus while typing ---------- */
 
@@ -144,6 +145,7 @@ const css = `
 `;
 
 const FreelancerRegister = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
@@ -189,11 +191,12 @@ const FreelancerRegister = () => {
     e.preventDefault();
     if (!validateForm()) return;
     setLoading(true);
-    // TODO: replace with the real registration API call
+    // Simulate API call
     setTimeout(() => {
       setLoading(false);
       console.log('Registration submitted:', formData);
-      alert('Registration form is ready for backend integration');
+      // Navigate to email verification with email in state
+      navigate('/freelancer/verify-email', { state: { email: formData.email } });
     }, 2000);
   };
 
