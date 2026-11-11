@@ -1,130 +1,38 @@
-import React, { useState } from 'react';
-import { Bell, Menu, Search, User, Settings, LogOut } from 'lucide-react';
+import { useNavigate } from 'react-router-dom'
+import { Bell, LogOut, Menu, Search, Settings, User } from 'lucide-react'
+import { Avatar, Badge, Dropdown, MenuItem } from '../ui'
+import { useAuth } from '../../context/AuthContext'
 
-const Topbar = ({ onMenuToggle }) => {
-  const [showUserMenu, setShowUserMenu] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
+export default function Topbar({ onMenu, roleLabel = 'Freelancer', base = '/freelancer' }) {
+  const nav = useNavigate()
+  const { user, signOut } = useAuth()
+  const displayName = user?.full_name || user?.email || 'User'
 
-  const notifications = [
-    { id: 1, text: 'New project match found', time: '2 minutes ago', unread: true },
-    { id: 2, text: 'Proposal accepted', time: '1 hour ago', unread: true },
-    { id: 3, text: 'Payment received', time: '3 hours ago', unread: false },
-  ];
+  const handleLogout = async () => {
+    await signOut()
+    nav('/login')
+  }
 
   return (
-    <header className="bg-white border-b border-border-color px-4 py-3">
-      <div className="flex items-center justify-between">
-        {/* Left side - Menu and Search */}
-        <div className="flex items-center space-x-4">
-          <button
-            onClick={onMenuToggle}
-            className="lg:hidden p-2 rounded-md text-muted-text hover:text-primary-text hover:bg-gray-100"
-          >
-            <Menu className="h-5 w-5" />
-          </button>
-          
-          <div className="hidden md:block">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-text" />
-              <input
-                type="text"
-                placeholder="Search projects, messages..."
-                className="pl-10 pr-4 py-2 w-80 border border-border-color rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue focus:border-transparent"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Right side - Notifications and User Menu */}
-        <div className="flex items-center space-x-4">
-          {/* Notifications */}
-          <div className="relative">
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="p-2 rounded-md text-muted-text hover:text-primary-text hover:bg-gray-100 relative"
-            >
-              <Bell className="h-5 w-5" />
-              {notifications.some(n => n.unread) && (
-                <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
-              )}
-            </button>
-
-            {/* Notifications Dropdown */}
-            {showNotifications && (
-              <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg border border-border-color z-50">
-                <div className="p-4 border-b border-border-color">
-                  <h3 className="text-sm font-semibold text-primary-text">Notifications</h3>
-                </div>
-                <div className="max-h-64 overflow-y-auto">
-                  {notifications.map((notification) => (
-                    <div 
-                      key={notification.id} 
-                      className={`p-3 border-b border-border-color hover:bg-gray-50 ${notification.unread ? 'bg-blue-50' : ''}`}
-                    >
-                      <p className="text-sm text-primary-text">{notification.text}</p>
-                      <p className="text-xs text-muted-text mt-1">{notification.time}</p>
-                    </div>
-                  ))}
-                </div>
-                <div className="p-3 border-t border-border-color">
-                  <button className="text-sm text-primary-blue hover:text-blue-600 font-medium">
-                    View all notifications
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* User Menu */}
-          <div className="relative">
-            <button
-              onClick={() => setShowUserMenu(!showUserMenu)}
-              className="flex items-center space-x-2 p-2 rounded-md text-muted-text hover:text-primary-text hover:bg-gray-100"
-            >
-              <div className="h-8 w-8 bg-primary-blue rounded-full flex items-center justify-center">
-                <User className="h-4 w-4 text-white" />
-              </div>
-              <span className="hidden md:block text-sm font-medium text-primary-text">
-                John Doe
-              </span>
-            </button>
-
-            {/* User Dropdown */}
-            {showUserMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-border-color z-50">
-                <div className="p-3 border-b border-border-color">
-                  <p className="text-sm font-medium text-primary-text">John Doe</p>
-                  <p className="text-xs text-muted-text">john.doe@comsats.edu.pk</p>
-                </div>
-                
-                <div className="py-1">
-                  <a 
-                    href="/freelancer/profile" 
-                    className="flex items-center px-3 py-2 text-sm text-muted-text hover:text-primary-text hover:bg-gray-50"
-                  >
-                    <User className="h-4 w-4 mr-2" />
-                    Profile
-                  </a>
-                  <a 
-                    href="/freelancer/settings" 
-                    className="flex items-center px-3 py-2 text-sm text-muted-text hover:text-primary-text hover:bg-gray-50"
-                  >
-                    <Settings className="h-4 w-4 mr-2" />
-                    Settings
-                  </a>
-                  <hr className="my-1 border-border-color" />
-                  <button className="flex items-center w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50">
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Sign Out
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-line bg-white/95 px-4 backdrop-blur lg:px-8">
+      <button onClick={onMenu} className="rounded-lg p-2 hover:bg-brand-pale lg:hidden" aria-label="Open menu"><Menu className="h-5 w-5" /></button>
+      <form role="search" className="relative hidden max-w-md flex-1 sm:block"
+        onSubmit={(e) => { e.preventDefault(); nav(`${base}/projects?q=${encodeURIComponent(new FormData(e.target).get('q') || '')}`) }}>
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted" />
+        <input name="q" aria-label="Search projects" placeholder="Search projects"
+          className="h-10 w-full rounded-lg border border-line bg-page pl-9 pr-3 text-sm focus:border-brand focus:outline-none focus:ring-2 focus:ring-brand/20" />
+      </form>
+      <div className="ml-auto flex items-center gap-2">
+        <Badge tone="blue" className="hidden sm:inline-flex">{roleLabel}</Badge>
+        <button onClick={() => nav(`${base}/notifications`)} className="relative rounded-lg p-2 hover:bg-brand-pale" aria-label="Notifications">
+          <Bell className="h-5 w-5" /><span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-bad" />
+        </button>
+        <Dropdown trigger={<span className="flex items-center gap-2 rounded-lg p-1 hover:bg-brand-pale"><Avatar name={displayName} size="sm" /><span className="hidden text-sm font-semibold md:block">{displayName}</span></span>}>
+          <MenuItem to={`${base}/profile`} icon={User}>My profile</MenuItem>
+          <MenuItem to={`${base}/settings`} icon={Settings}>Settings</MenuItem>
+          <MenuItem onClick={handleLogout} icon={LogOut} danger>Log out</MenuItem>
+        </Dropdown>
       </div>
     </header>
-  );
-};
-
-export default Topbar;
+  )
+}

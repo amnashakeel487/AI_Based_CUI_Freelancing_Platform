@@ -1,46 +1,26 @@
-import React from 'react';
+import { Link, Outlet } from 'react-router-dom'
+import { ArrowLeft, ShieldCheck, Sparkles, Users } from 'lucide-react'
+import { Logo } from '../components/ui'
 
-const AuthLayout = ({ children, title, subtitle }) => {
+export default function AuthLayout({ wide }) {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        {/* Logo */}
-        <div className="flex justify-center">
-          <div className="flex items-center">
-            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">CUI</span>
-            </div>
-            <span className="ml-3 text-2xl font-bold text-slate-800">Freelance</span>
-          </div>
+    <div className="grid min-h-screen lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+      <aside className="hidden flex-col justify-between bg-navy p-10 text-white lg:flex">
+        <Logo light />
+        <div>
+          <h2 className="max-w-sm text-3xl font-extrabold leading-tight">Real projects for the CUI community.</h2>
+          <ul className="mt-8 space-y-4 text-sm text-slate-300">
+            <li className="flex gap-3"><Users className="h-5 w-5 text-brand" />Freelancers and clients from your own university</li>
+            <li className="flex gap-3"><Sparkles className="h-5 w-5 text-brand" />Matching based on skills and project needs</li>
+            <li className="flex gap-3"><ShieldCheck className="h-5 w-5 text-brand" />COMSATS email required to join</li>
+          </ul>
         </div>
-        
-        {/* Title */}
-        <h2 className="mt-6 text-center text-3xl font-bold text-slate-800">
-          {title}
-        </h2>
-        
-        {/* Subtitle */}
-        {subtitle && (
-          <p className="mt-2 text-center text-sm text-gray-600">
-            {subtitle}
-          </p>
-        )}
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow-sm rounded-lg sm:px-10 border border-gray-200">
-          {children}
-        </div>
-      </div>
-      
-      {/* Footer */}
-      <div className="mt-8 text-center">
-        <p className="text-xs text-gray-500">
-          © 2026 CUI Freelancing Platform. All rights reserved.
-        </p>
-      </div>
+        <p className="text-xs text-slate-400">© CUI Freelance prototype</p>
+      </aside>
+      <main className="flex flex-col px-4 py-8 sm:px-8">
+        <Link to="/" className="mb-6 inline-flex items-center gap-1 self-start text-sm font-medium text-brand hover:underline"><ArrowLeft className="h-4 w-4" />Back to home</Link>
+        <div className={`m-auto w-full ${wide ? 'max-w-4xl' : 'max-w-md'}`}><Outlet /></div>
+      </main>
     </div>
-  );
-};
-
-export default AuthLayout;
+  )
+}

@@ -1,224 +1,203 @@
-import React from 'react';
-import PageHeader from '../../components/ui/PageHeader';
-import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import Input from '../../components/ui/Input';
-import { Shield, Bell, Eye } from 'lucide-react';
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Sparkles } from 'lucide-react'
+import {
+  Badge, Button, Card, Checkbox, ConfirmDialog, Input, PageHeader,
+  Select, Tabs, useToast,
+} from '../../components/ui'
+import { useAuth } from '../../context/AuthContext'
+import { passwordIssues } from '../../utils/validate'
+import { updatePassword as supabaseUpdatePassword } from '../../services/authService'
+import { put } from '../../services/api'
+import { supabase } from '../../lib/supabase'
 
-const Settings = () => {
+export default function Settings() {
+  const [tab, setTab] = useState('account')
+  const toast = useToast()
+  const nav = useNavigate()
+  const { user, signOut } = useAuth()
+
+  const [pw, setPw] = useState({ cur: '', next: '', confirm: '' })
+  const [err, setErr] = useState({})
+  const [busy, setBusy] = useState(false)
+  const [out, setOut] = useState(false)
+
+  // Notification preferences (local state — persisted via backend)
+  const [n, setN] = useState({
+    proposals: true, messages: true, projects: true, news: false,
+  })
+
+  const changePw = async (e) => {
+    e.preventDefault()
+    const x = {}
+    if (!pw.cur) x.cur = 'Enter your current password.'
+    const i = passwordIssues(pw.next)
+    if (i) x.next = i
+    if (pw.confirm !== pw.next) x.confirm = 'Passwords do not match.'
+    setErr(x)
+    if (Object.keys(x).length) return
+
+    setBusy(true)
+    try {
+      await supabaseUpdatePassword(pw.next)
+      toast('Password updated successfully.')
+      setPw({ cur: '', next: '', confirm: '' })
+    } catch (err) {
+      toast(err.message || 'Failed to update password.', 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const saveSettings = async () => {
+    try {
+      await put('/account/settings', {
+        notify_proposals: n.proposals,
+        notify_messages: n.messages,
+        notify_projects: n.projects,
+        notify_news: n.news,
+      })
+      toast('Settings saved.')
+    } catch (err) {
+      toast(err.message || 'Failed to save settings.', 'error')
+    }
+  }
+
+  const handleLogout = async () => {
+    await signOut()
+    nav('/login')
+  }
+
   return (
-    <div className="p-6">
-      <PageHeader 
-        title="Settings"
-        subtitle="Manage your account preferences and security"
+    <>
+      <PageHeader title="Settings" />
+      <Tabs
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { value: 'account', label: 'Account' },
+          { value: 'privacy', label: 'Visibility' },
+          { value: 'notifications', label: 'Notifications' },
+          { value: 'security', label: 'Security' },
+          { value: 'premium', label: 'AI Tools' },
+        ]}
       />
-      
-      <div className="max-w-4xl space-y-6">
-        {/* General Settings */}
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold text-primary-text mb-6">General Settings</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Input
-              label="First Name"
-              value="John"
-              placeholder="Enter your first name"
-            />
-            
-            <Input
-              label="Last Name"
-              value="Doe"
-              placeholder="Enter your last name"
-            />
-            
-            <Input
-              label="Email Address"
-              type="email"
-              value="john.doe@comsats.edu.pk"
-              placeholder="Enter your email"
-            />
-            
-            <Input
-              label="Phone Number"
-              type="tel"
-              value="+92 300 1234567"
-              placeholder="Enter your phone number"
-            />
-            
-            <Input
-              label="Location"
-              value="Islamabad, Pakistan"
-              placeholder="Enter your location"
-            />
-            
-            <div>
-              <label className="block text-sm font-medium text-primary-text mb-2">
-                Time Zone
-              </label>
-              <select className="w-full px-3 py-2 border border-border-color rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue">
-                <option>Pakistan Standard Time (UTC+5)</option>
-                <option>UTC</option>
-                <option>Eastern Standard Time (UTC-5)</option>
-              </select>
-            </div>
-          </div>
-          
-          <div className="mt-6">
-            <Button>Save Changes</Button>
-          </div>
-        </Card>
 
-        {/* Notification Settings */}
-        <Card className="p-6">
-          <div className="flex items-center mb-6">
-            <Bell className="h-5 w-5 text-primary-blue mr-2" />
-            <h3 className="text-lg font-semibold text-primary-text">Notification Settings</h3>
-          </div>
-          
-          <div className="space-y-4">
-            {[
-              { label: 'Email notifications for new project matches', checked: true },
-              { label: 'SMS notifications for urgent messages', checked: false },
-              { label: 'Push notifications for proposal updates', checked: true },
-              { label: 'Weekly summary emails', checked: true },
-              { label: 'Marketing and promotional emails', checked: false },
-            ].map((setting, index) => (
-              <div key={index} className="flex items-center justify-between py-2">
-                <span className="text-primary-text">{setting.label}</span>
-                <input
-                  type="checkbox"
-                  defaultChecked={setting.checked}
-                  className="h-4 w-4 text-primary-blue focus:ring-primary-blue border-border-color rounded"
-                />
-              </div>
-            ))}
-          </div>
-        </Card>
+      <Card className="mt-6 max-w-2xl space-y-4 p-6">
+        {tab === 'account' && (
+          <>
+            <Input
+              label="Email"
+              value={user?.email || ''}
+              readOnly
+              hint="Email changes are handled through Supabase Auth."
+            />
+            <Button onClick={saveSettings}>Save changes</Button>
+          </>
+        )}
 
-        {/* Privacy Settings */}
-        <Card className="p-6">
-          <div className="flex items-center mb-6">
-            <Eye className="h-5 w-5 text-primary-blue mr-2" />
-            <h3 className="text-lg font-semibold text-primary-text">Privacy Settings</h3>
-          </div>
-          
+        {tab === 'privacy' && (
+          <>
+            <Select
+              label="Profile visibility"
+              defaultValue="public"
+              options={[
+                { value: 'public', label: 'Visible to all CUI members' },
+                { value: 'clients', label: 'Visible to clients I apply to' },
+                { value: 'private', label: 'Hidden' },
+              ]}
+            />
+            <Button onClick={async () => {
+              try {
+                await put('/account/settings', { visibility: 'public' })
+                toast('Visibility saved.')
+              } catch (err) {
+                toast(err.message || 'Failed to save.', 'error')
+              }
+            }}>Save</Button>
+          </>
+        )}
+
+        {tab === 'notifications' && (
+          <>
+            <Checkbox label="Proposal updates" checked={n.proposals}
+              onChange={(e) => setN({ ...n, proposals: e.target.checked })} />
+            <Checkbox label="New messages" checked={n.messages}
+              onChange={(e) => setN({ ...n, messages: e.target.checked })} />
+            <Checkbox label="Project deadlines" checked={n.projects}
+              onChange={(e) => setN({ ...n, projects: e.target.checked })} />
+            <Checkbox label="Platform news" checked={n.news}
+              onChange={(e) => setN({ ...n, news: e.target.checked })} />
+            <Button onClick={saveSettings}>Save preferences</Button>
+          </>
+        )}
+
+        {tab === 'security' && (
+          <form onSubmit={changePw} noValidate className="space-y-4">
+            <Input
+              label="Current password"
+              type="password"
+              value={pw.cur}
+              onChange={(e) => setPw({ ...pw, cur: e.target.value })}
+              error={err.cur}
+              hint="Enter your current password to confirm the change."
+            />
+            <Input
+              label="New password"
+              type="password"
+              value={pw.next}
+              onChange={(e) => setPw({ ...pw, next: e.target.value })}
+              error={err.next}
+              hint="At least 8 characters with a letter and a number."
+            />
+            <Input
+              label="Confirm new password"
+              type="password"
+              value={pw.confirm}
+              onChange={(e) => setPw({ ...pw, confirm: e.target.value })}
+              error={err.confirm}
+            />
+            <Button type="submit" loading={busy}>Change password</Button>
+          </form>
+        )}
+
+        {tab === 'premium' && (
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-primary-text mb-2">
-                Profile Visibility
-              </label>
-              <select className="w-full md:w-1/2 px-3 py-2 border border-border-color rounded-md focus:outline-none focus:ring-2 focus:ring-primary-blue">
-                <option>Public - Visible to all clients</option>
-                <option>Limited - Visible to matched clients only</option>
-                <option>Private - Visible only when you apply</option>
-              </select>
-            </div>
-            
-            <div className="flex items-center justify-between py-2">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-brand-pale text-brand">
+                <Sparkles className="h-5 w-5" />
+              </span>
               <div>
-                <span className="text-primary-text">Show online status</span>
-                <p className="text-sm text-muted-text">Let clients know when you're online</p>
+                <p className="font-bold text-navy">Premium AI Tools</p>
+                <Badge tone="warning">Coming soon</Badge>
               </div>
-              <input
-                type="checkbox"
-                defaultChecked={true}
-                className="h-4 w-4 text-primary-blue focus:ring-primary-blue border-border-color rounded"
-              />
             </div>
-            
-            <div className="flex items-center justify-between py-2">
-              <div>
-                <span className="text-primary-text">Show earnings publicly</span>
-                <p className="text-sm text-muted-text">Display total earnings on your profile</p>
-              </div>
-              <input
-                type="checkbox"
-                defaultChecked={false}
-                className="h-4 w-4 text-primary-blue focus:ring-primary-blue border-border-color rounded"
-              />
+            <p className="text-sm text-muted">
+              Premium AI tools include AI-powered proposal writing, smart project
+              recommendations, and automated milestone tracking. This feature is
+              not yet available.
+            </p>
+            <div className="rounded-lg border border-dashed border-line p-4 text-center text-sm text-muted">
+              <p className="font-semibold">You are on the free plan</p>
+              <p className="mt-1 text-xs">Premium features will be unlocked when this feature launches.</p>
             </div>
+            <Button disabled variant="outline" className="w-full">Upgrade to Premium</Button>
           </div>
-        </Card>
+        )}
+      </Card>
 
-        {/* Security Settings */}
-        <Card className="p-6">
-          <div className="flex items-center mb-6">
-            <Shield className="h-5 w-5 text-primary-blue mr-2" />
-            <h3 className="text-lg font-semibold text-primary-text">Security Settings</h3>
-          </div>
-          
-          <div className="space-y-6">
-            <div>
-              <h4 className="font-medium text-primary-text mb-2">Change Password</h4>
-              <div className="space-y-3">
-                <Input
-                  label="Current Password"
-                  type="password"
-                  placeholder="Enter current password"
-                />
-                <Input
-                  label="New Password"
-                  type="password"
-                  placeholder="Enter new password"
-                />
-                <Input
-                  label="Confirm New Password"
-                  type="password"
-                  placeholder="Confirm new password"
-                />
-                <Button size="sm">Update Password</Button>
-              </div>
-            </div>
-            
-            <hr className="border-border-color" />
-            
-            <div>
-              <h4 className="font-medium text-primary-text mb-2">Two-Factor Authentication</h4>
-              <p className="text-muted-text mb-3">
-                Add an extra layer of security to your account with two-factor authentication.
-              </p>
-              <Button variant="outline" size="sm">Enable 2FA</Button>
-            </div>
-            
-            <hr className="border-border-color" />
-            
-            <div>
-              <h4 className="font-medium text-primary-text mb-2">Login Sessions</h4>
-              <p className="text-muted-text mb-3">
-                Manage your active login sessions across different devices.
-              </p>
-              <Button variant="outline" size="sm">View Active Sessions</Button>
-            </div>
-          </div>
-        </Card>
-
-        {/* Danger Zone */}
-        <Card className="p-6 border-red-200">
-          <h3 className="text-lg font-semibold text-red-600 mb-4">Danger Zone</h3>
-          
-          <div className="space-y-4">
-            <div>
-              <h4 className="font-medium text-primary-text mb-2">Deactivate Account</h4>
-              <p className="text-muted-text mb-3">
-                Temporarily deactivate your account. You can reactivate it anytime.
-              </p>
-              <Button variant="outline" size="sm">Deactivate Account</Button>
-            </div>
-            
-            <hr className="border-red-200" />
-            
-            <div>
-              <h4 className="font-medium text-primary-text mb-2">Delete Account</h4>
-              <p className="text-muted-text mb-3">
-                Permanently delete your account and all associated data. This action cannot be undone.
-              </p>
-              <Button variant="danger" size="sm">Delete Account</Button>
-            </div>
-          </div>
-        </Card>
+      <div className="mt-6">
+        <Button variant="danger" onClick={() => setOut(true)}>Log out</Button>
       </div>
-    </div>
-  );
-};
 
-export default Settings;
+      <ConfirmDialog
+        open={out}
+        title="Log out?"
+        text="You will return to the login page."
+        confirmLabel="Log out"
+        onClose={() => setOut(false)}
+        onConfirm={handleLogout}
+      />
+    </>
+  )
+}

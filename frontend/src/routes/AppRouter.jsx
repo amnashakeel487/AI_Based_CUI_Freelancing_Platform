@@ -1,91 +1,93 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom'
+import PublicLayout from '../layouts/PublicLayout'
+import AuthLayout from '../layouts/AuthLayout'
+import DashboardLayout from '../layouts/DashboardLayout'
+import RequireAuth from '../components/RequireAuth'
+import Landing from '../pages/public/Landing'
+import NotFound from '../pages/public/NotFound'
+import RoleSelection from '../pages/auth/RoleSelection'
+import { FreelancerRegister, ClientRegister } from '../pages/auth/Register'
+import EmailVerification from '../pages/auth/EmailVerification'
+import Login from '../pages/auth/Login'
+import PendingApproval from '../pages/auth/PendingApproval'
+import { ForgotPassword, ResetPassword } from '../pages/auth/PasswordRecovery'
+import FreelancerOnboarding from '../pages/onboarding/FreelancerOnboarding'
+import ClientOnboarding from '../pages/onboarding/ClientOnboarding'
+import ClientDashboard from '../pages/client/ClientDashboard'
+import Dashboard from '../pages/freelancer/Dashboard'
+import { Profile, EditProfile } from '../pages/freelancer/Profile'
+import Skills from '../pages/freelancer/Skills'
+import Portfolio from '../pages/freelancer/Portfolio'
+import { BrowseProjects, ProjectDetails, Recommendations } from '../pages/freelancer/Projects'
+import { MyProposals, ProposalDetails, SubmitProposal } from '../pages/freelancer/Proposals'
+import { ActiveProjects, Workspace, SubmitWork } from '../pages/freelancer/Work'
+import Messages from '../pages/freelancer/Messages'
+import Notifications from '../pages/freelancer/Notifications'
+import Reviews from '../pages/freelancer/Reviews'
+import { Earnings, Transactions } from '../pages/freelancer/Money'
+import Settings from '../pages/freelancer/Settings'
+import Help from '../pages/freelancer/Help'
 
-// Layouts
-import AuthLayout from '../layouts/AuthLayout';
-import DashboardLayout from '../layouts/DashboardLayout';
-
-// Auth Pages (placeholder components for now)
-import Login from '../pages/auth/Login';
-import FreelancerRegister from '../pages/auth/FreelancerRegister';
-import EmailVerification from '../pages/auth/EmailVerification';
-import ForgotPassword from '../pages/auth/ForgotPassword';
-import ResetPassword from '../pages/auth/ResetPassword';
-
-// Freelancer Pages (placeholder components for now)
-import Dashboard from '../pages/freelancer/Dashboard';
-import Profile from '../pages/freelancer/Profile';
-import Settings from '../pages/freelancer/Settings';
-
-const AppRouter = () => {
+export default function AppRouter() {
   return (
-    <Router>
-      <Routes>
-        {/* Default redirect */}
-        <Route path="/" element={<Navigate to="/freelancer/dashboard" replace />} />
-        
-        {/* Auth Routes - No Sidebar Layout */}
+    <Routes>
+      {/* Public */}
+      <Route element={<PublicLayout />}>
+        <Route path="/" element={<Landing />} />
+      </Route>
+
+      {/* Auth — narrow layout */}
+      <Route element={<AuthLayout />}>
         <Route path="/login" element={<Login />} />
-        <Route path="/freelancer/register" element={<FreelancerRegister />} />
-        <Route path="/freelancer/verify-email" element={<EmailVerification />} />
+        <Route path="/register/freelancer" element={<FreelancerRegister />} />
+        <Route path="/register/client" element={<ClientRegister />} />
+        <Route path="/verify-email" element={<EmailVerification />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-        
-        {/* Freelancer Dashboard Routes - With Sidebar Layout */}
-        <Route path="/freelancer/*" element={<FreelancerRoutes />} />
-        
-        {/* Future Client Module */}
-        <Route path="/client/*" element={<div>Client Module - Coming Soon</div>} />
-        
-        {/* Future Admin Module */}
-        <Route path="/admin/*" element={<div>Admin Module - Coming Soon</div>} />
-        
-        {/* 404 Page */}
-        <Route path="*" element={<div>Page Not Found</div>} />
-      </Routes>
-    </Router>
-  );
-};
+      </Route>
 
-// Freelancer module routes with dashboard layout
-const FreelancerRoutes = () => {
-  return (
-    <DashboardLayout>
-      <Routes>
+      {/* Auth — wide layout (role selection + onboarding) */}
+      <Route element={<AuthLayout wide />}>
+        <Route path="/role" element={<RoleSelection />} />
+        <Route path="/onboarding/freelancer" element={<RequireAuth requireRole="freelancer"><FreelancerOnboarding /></RequireAuth>} />
+        <Route path="/onboarding/client" element={<RequireAuth requireRole="client"><ClientOnboarding /></RequireAuth>} />
+      </Route>
+
+      {/* Pending approval */}
+      <Route path="/pending-approval" element={<RequireAuth><PendingApproval /></RequireAuth>} />
+
+      {/* Freelancer dashboard */}
+      <Route path="/freelancer" element={<RequireAuth requireRole="freelancer" requireApproval><DashboardLayout /></RequireAuth>}>
+        <Route index element={<Navigate to="dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="profile" element={<Profile />} />
-        <Route path="profile/edit" element={<div>Edit Profile - Coming Soon</div>} />
-        <Route path="skills" element={<div>Skills Management - Coming Soon</div>} />
-        <Route path="portfolio" element={<div>Portfolio - Coming Soon</div>} />
-        
-        <Route path="projects" element={<div>Available Projects - Coming Soon</div>} />
-        <Route path="recommendations" element={<div>AI Recommendations - Coming Soon</div>} />
-        <Route path="projects/:projectId" element={<div>Project Details - Coming Soon</div>} />
-        <Route path="proposals/new" element={<div>Create Proposal - Coming Soon</div>} />
-        <Route path="proposals" element={<div>My Proposals - Coming Soon</div>} />
-        
-        <Route path="my-projects" element={<div>My Active Projects - Coming Soon</div>} />
-        <Route path="workspace/:projectId" element={<div>Project Workspace - Coming Soon</div>} />
-        <Route path="workspace/:projectId/milestones" element={<div>Milestones - Coming Soon</div>} />
-        <Route path="workspace/:projectId/submit" element={<div>Submit Work - Coming Soon</div>} />
-        <Route path="submissions" element={<div>Submission History - Coming Soon</div>} />
-        
-        <Route path="messages" element={<div>Messages - Coming Soon</div>} />
-        <Route path="notifications" element={<div>Notifications - Coming Soon</div>} />
-        
-        <Route path="reviews" element={<div>Reviews & Ratings - Coming Soon</div>} />
-        <Route path="earnings" element={<div>Earnings Overview - Coming Soon</div>} />
-        <Route path="transactions" element={<div>Transaction History - Coming Soon</div>} />
-        
-        <Route path="ai-tools" element={<div>AI Tools Dashboard - Coming Soon</div>} />
-        <Route path="ai-tools/proposal-assistant" element={<div>Proposal Assistant - Coming Soon</div>} />
-        
+        <Route path="profile/edit" element={<EditProfile />} />
+        <Route path="skills" element={<Skills />} />
+        <Route path="portfolio" element={<Portfolio />} />
+        <Route path="projects" element={<BrowseProjects />} />
+        <Route path="projects/:id" element={<ProjectDetails />} />
+        <Route path="projects/:id/apply" element={<SubmitProposal />} />
+        <Route path="recommendations" element={<Recommendations />} />
+        <Route path="proposals" element={<MyProposals />} />
+        <Route path="proposals/:id" element={<ProposalDetails />} />
+        <Route path="active" element={<ActiveProjects />} />
+        <Route path="active/:id" element={<Workspace />} />
+        <Route path="active/:id/submit" element={<SubmitWork />} />
+        <Route path="messages" element={<Messages />} />
+        <Route path="notifications" element={<Notifications />} />
+        <Route path="reviews" element={<Reviews />} />
+        <Route path="earnings" element={<Earnings />} />
+        <Route path="transactions" element={<Transactions />} />
         <Route path="settings" element={<Settings />} />
-        <Route path="settings/security" element={<div>Security Settings - Coming Soon</div>} />
-        <Route path="support" element={<div>Support Center - Coming Soon</div>} />
-      </Routes>
-    </DashboardLayout>
-  );
-};
+        <Route path="help" element={<Help />} />
+      </Route>
 
-export default AppRouter;
+      {/* Client */}
+      <Route path="/client" element={<RequireAuth requireRole="client"><Navigate to="/client/dashboard" replace /></RequireAuth>} />
+      <Route path="/client/dashboard" element={<RequireAuth requireRole="client"><ClientDashboard /></RequireAuth>} />
+
+      {/* 404 */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  )
+}
